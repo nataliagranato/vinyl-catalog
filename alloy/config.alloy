@@ -1,0 +1,33 @@
+// Faro receiver — recebe sinais do browser SDK
+faro.receiver "vinyl_frontend" {
+  server {
+    listen_address       = "0.0.0.0"
+    listen_port          = 12347
+    cors_allowed_origins = ["http://localhost:3001", "http://localhost:3000"]
+  }
+
+  output {
+    logs   = [loki.write.default.receiver]
+    traces = [otelcol.exporter.otlp.default.input]
+  }
+}
+
+// Encaminhar logs/erros para Loki
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+  external_labels = {
+    service_name = "vinyl-catalog-frontend",
+  }
+}
+
+// Encaminhar traces para o OTel Collector existente
+otelcol.exporter.otlp "default" {
+  client {
+    endpoint = "otel-collector:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

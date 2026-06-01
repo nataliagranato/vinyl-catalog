@@ -1,0 +1,411 @@
+{
+  "id": null,
+  "uid": "vinyl-traces",
+  "title": "Vinyl Catalog — Traces",
+  "description": "Visualização de traces distribuídos via Jaeger",
+  "tags": ["vinyl-catalog", "traces", "jaeger"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "hide": 2,
+        "name": "DS_JAEGER",
+        "type": "datasource",
+        "query": "jaeger"
+      },
+      {
+        "hide": 2,
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "query": "prometheus"
+      },
+      {
+        "name": "operation",
+        "label": "Operação",
+        "type": "query",
+        "datasource": { "type": "jaeger", "uid": "${DS_JAEGER}" },
+        "definition": "operations(vinyl-catalog)",
+        "query": "operations(vinyl-catalog)",
+        "includeAll": true,
+        "allValue": "",
+        "current": { "text": "All", "value": "$__all" },
+        "hide": 0,
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "RPS",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [{
+        "expr": "sum(rate(http_requests_total[5m]))",
+        "refId": "A",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 50 },
+            { "color": "red", "value": 100 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 2,
+      "title": "Taxa de Erro",
+      "type": "stat",
+      "gridPos": { "x": 4, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [{
+        "expr": "sum(rate(http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+        "refId": "A",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 3,
+      "title": "Latência p95",
+      "type": "stat",
+      "gridPos": { "x": 9, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+        "refId": "A",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.2 },
+            { "color": "red", "value": 0.5 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 4,
+      "title": "Latência p50",
+      "type": "stat",
+      "gridPos": { "x": 14, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [{
+        "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+        "refId": "A",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.05 },
+            { "color": "red", "value": 0.2 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 5,
+      "title": "Serviço",
+      "type": "stat",
+      "gridPos": { "x": 19, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [{
+        "expr": "up{job=\"vinyl-catalog\"}",
+        "refId": "A",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": {
+              "0": { "text": "DOWN", "color": "red", "index": 0 },
+              "1": { "text": "UP",   "color": "green", "index": 1 }
+            }}
+          ],
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 1 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 6,
+      "title": "Traces Recentes — vinyl-catalog",
+      "description": "Clique em qualquer Trace ID para abrir o waterfall completo.",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 10 },
+      "datasource": { "type": "jaeger", "uid": "${DS_JAEGER}" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "jaeger", "uid": "${DS_JAEGER}" },
+        "queryType": "search",
+        "service": "vinyl-catalog",
+        "operation": "${operation}",
+        "limit": 20
+      }],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "traceID": "Trace ID",
+              "traceName": "Operação",
+              "startTime": "Início",
+              "duration": "Duração"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Duração" },
+            "properties": [
+              { "id": "unit", "value": "µs" },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background-solid"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 50000 },
+                    { "color": "red", "value": 500000 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Início" },
+            "properties": [
+              { "id": "unit", "value": "dateTimeAsLocal" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Início", "desc": true }]
+      }
+    },
+    {
+      "id": 7,
+      "title": "Traces com Erro",
+      "description": "Traces onde algum span foi marcado com error=true. Clique no Trace ID para inspecionar.",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 14, "w": 24, "h": 8 },
+      "datasource": { "type": "jaeger", "uid": "${DS_JAEGER}" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "jaeger", "uid": "${DS_JAEGER}" },
+        "queryType": "search",
+        "service": "vinyl-catalog",
+        "tags": "error=true",
+        "limit": 20
+      }],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "traceID": "Trace ID",
+              "traceName": "Operação",
+              "startTime": "Início",
+              "duration": "Duração"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Duração" },
+            "properties": [{ "id": "unit", "value": "µs" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Início" },
+            "properties": [{ "id": "unit", "value": "dateTimeAsLocal" }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Início", "desc": true }]
+      }
+    },
+    {
+      "id": 8,
+      "title": "Latência p50 / p95 / p99 por Operação",
+      "description": "Tabela de latência percentil por handler. Ordena por p95 decrescente.",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 22, "w": 14, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (handler, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "refId": "A", "format": "table", "instant": true, "legendFormat": ""
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (handler, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "refId": "B", "format": "table", "instant": true, "legendFormat": ""
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (handler, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "refId": "C", "format": "table", "instant": true, "legendFormat": ""
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true, "job": true, "instance": true, "le": true },
+            "renameByName": {
+              "handler": "Handler",
+              "Value #A": "p50 (s)",
+              "Value #B": "p95 (s)",
+              "Value #C": "p99 (s)"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "p(50|95|99)" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background-solid" },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 0.1 },
+                { "color": "red", "value": 0.5 }
+              ]}}
+            ]
+          }
+        ]
+      },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 9,
+      "title": "Erros por Operação",
+      "description": "Taxa de erros 5xx agrupada por handler nos últimos 30 minutos.",
+      "type": "timeseries",
+      "gridPos": { "x": 14, "y": 22, "w": 10, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [{
+        "expr": "sum by (handler) (rate(http_requests_total{status_code=~\"5..\"}[5m]))",
+        "legendFormat": "{{handler}}",
+        "refId": "A"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 15 },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Volume de Spans por Handler (última 1h)",
+      "type": "barchart",
+      "gridPos": { "x": 0, "y": 31, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [{
+        "expr": "sort_desc(sum by (handler) (increase(http_requests_total[1h])))",
+        "legendFormat": "{{handler}}",
+        "refId": "A",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Latência ao Longo do Tempo (p50 / p95)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 31, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Abrir no Jaeger UI",
+      "type": "text",
+      "gridPos": { "x": 0, "y": 39, "w": 24, "h": 3 },
+      "options": {
+        "mode": "markdown",
+        "content": "**Jaeger UI:** [http://localhost:16686/search?service=vinyl-catalog](http://localhost:16686/search?service=vinyl-catalog) — Clique num Trace ID em qualquer tabela acima para abrir o waterfall completo diretamente no Grafana."
+      }
+    }
+  ]
+}

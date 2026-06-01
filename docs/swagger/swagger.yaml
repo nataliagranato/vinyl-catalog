@@ -1,0 +1,631 @@
+basePath: /api/v1
+definitions:
+  http.CreateVinylRequest:
+    properties:
+      artist:
+        example: Miles Davis
+        type: string
+      description:
+        example: Modal jazz masterpiece recorded in two sessions.
+        type: string
+      genre:
+        example: Jazz
+        type: string
+      label:
+        example: Columbia
+        type: string
+      title:
+        example: Kind of Blue
+        type: string
+      year:
+        example: 1959
+        minimum: 1860
+        type: integer
+    required:
+    - artist
+    - title
+    - year
+    type: object
+  http.ErrorResponse:
+    properties:
+      error:
+        example: vinyl not found
+        type: string
+    type: object
+  http.LoginRequest:
+    properties:
+      password:
+        example: admin
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  http.ProfileResponse:
+    properties:
+      bio:
+        type: string
+      display_name:
+        type: string
+      links:
+        items:
+          type: string
+        type: array
+      photo_url:
+        type: string
+      preferred_genres:
+        items:
+          type: string
+        type: array
+      username:
+        type: string
+    type: object
+  http.TokenResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  http.TrackRequest:
+    properties:
+      lyrics:
+        example: So What is a D Dorian...
+        type: string
+      position:
+        example: 1
+        type: integer
+      title:
+        example: So What
+        type: string
+    required:
+    - title
+    type: object
+  http.TrackResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      lyrics:
+        type: string
+      position:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+      vinyl_id:
+        type: string
+    type: object
+  http.UpdateProfileRequest:
+    properties:
+      bio:
+        type: string
+      display_name:
+        type: string
+      links:
+        items:
+          type: string
+        type: array
+      preferred_genres:
+        items:
+          type: string
+        type: array
+    type: object
+  http.UpdateVinylRequest:
+    properties:
+      artist:
+        example: Miles Davis
+        type: string
+      description:
+        example: Modal jazz masterpiece recorded in two sessions.
+        type: string
+      genre:
+        example: Jazz
+        type: string
+      label:
+        example: Columbia
+        type: string
+      title:
+        example: Kind of Blue
+        type: string
+      year:
+        example: 1959
+        minimum: 1860
+        type: integer
+    required:
+    - artist
+    - title
+    - year
+    type: object
+  http.VinylResponse:
+    properties:
+      artist:
+        example: Miles Davis
+        type: string
+      cover_url:
+        example: /uploads/abc123.jpg
+        type: string
+      created_at:
+        example: "2026-03-06T00:00:00Z"
+        type: string
+      description:
+        example: Modal jazz masterpiece.
+        type: string
+      genre:
+        example: Jazz
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      label:
+        example: Columbia
+        type: string
+      title:
+        example: Kind of Blue
+        type: string
+      updated_at:
+        example: "2026-03-06T00:00:00Z"
+        type: string
+      year:
+        example: 1959
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: API REST para catalogação de discos de vinil
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Vinyl Catalog API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Gera um token JWT para acesso à API
+      parameters:
+      - description: Credenciais
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Autenticar usuário
+      tags:
+      - auth
+  /profile:
+    get:
+      description: Retorna o perfil público do catálogo (sem autenticação)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.ProfileResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Perfil público
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      description: Atualiza nome, bio, links e gêneros preferidos do perfil
+      parameters:
+      - description: Dados do perfil
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Atualizar perfil
+      tags:
+      - profile
+  /profile/photo:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Faz upload de uma imagem de perfil (jpg, png, webp)
+      parameters:
+      - description: Imagem do perfil
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload foto do perfil
+      tags:
+      - profile
+  /vinyls:
+    get:
+      description: Retorna todos os discos de vinil cadastrados
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.VinylResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar discos
+      tags:
+      - vinyls
+    post:
+      consumes:
+      - application/json
+      description: Cadastra um novo disco de vinil
+      parameters:
+      - description: Dados do disco
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateVinylRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.VinylResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Criar disco
+      tags:
+      - vinyls
+  /vinyls/{id}:
+    delete:
+      description: Remove um disco de vinil pelo seu ID
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remover disco
+      tags:
+      - vinyls
+    get:
+      description: Retorna um disco de vinil pelo seu ID
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.VinylResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buscar disco por ID
+      tags:
+      - vinyls
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um disco de vinil existente
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizados
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.UpdateVinylRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.VinylResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Atualizar disco
+      tags:
+      - vinyls
+  /vinyls/{id}/cover:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Faz upload de uma imagem e atualiza o cover_url do vinil
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Imagem da capa (jpg, png, webp)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.VinylResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload capa do disco
+      tags:
+      - vinyls
+  /vinyls/{id}/tracks:
+    get:
+      description: Retorna todas as faixas de um disco ordenadas por posição
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.TrackResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar faixas do disco
+      tags:
+      - tracks
+    post:
+      consumes:
+      - application/json
+      description: Adiciona uma nova faixa ao disco
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados da faixa
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.TrackRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.TrackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Criar faixa
+      tags:
+      - tracks
+  /vinyls/{id}/tracks/{track_id}:
+    delete:
+      description: Remove uma faixa do disco
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Track ID
+        in: path
+        name: track_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remover faixa
+      tags:
+      - tracks
+    put:
+      consumes:
+      - application/json
+      description: Atualiza título, posição e letra de uma faixa
+      parameters:
+      - description: Vinyl ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Track ID
+        in: path
+        name: track_id
+        required: true
+        type: string
+      - description: Dados da faixa
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.TrackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.TrackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Atualizar faixa
+      tags:
+      - tracks
+securityDefinitions:
+  BearerAuth:
+    description: Autenticação JWT. Faça POST em /auth/login e cole apenas o valor
+      do campo "token" no campo Authorize abaixo (sem precisar digitar "Bearer ").
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

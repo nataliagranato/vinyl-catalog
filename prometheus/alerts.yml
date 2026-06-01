@@ -1,0 +1,130 @@
+groups:
+  - name: vinyl-catalog
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) /
+          sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High 5xx error rate"
+          description: "Error rate is {{ humanizePercentage $value }} over the last 5 minutes (threshold: 5%)."
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 latency"
+          description: "p95 latency is {{ humanizeDuration $value }} over the last 10 minutes (threshold: 500ms)."
+
+      - alert: ServiceDown
+        expr: up{job="vinyl-catalog"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "vinyl-catalog service is down"
+          description: "The vinyl-catalog service has been unreachable for more than 1 minute."
+
+      - alert: HighRequestRate
+        expr: sum(rate(http_requests_total[5m])) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request rate"
+          description: "Request rate is {{ humanize $value }} req/s over the last 5 minutes (threshold: 100 req/s)."
+
+      - alert: NoRequestsReceived
+        expr: sum(rate(http_requests_total[10m])) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No requests received"
+          description: "The service has received no requests in the last 10 minutes."
+
+      - alert: P99HighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p99 latency"
+          description: "p99 latency is {{ humanizeDuration $value }} over the last 5 minutes (threshold: 1s)."
+
+      - alert: AuthErrorRate
+        expr: |
+          sum(rate(http_requests_total{status="401"}[5m])) /
+          sum(rate(http_requests_total[5m])) > 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High authentication error rate"
+          description: "401 Unauthorized rate is {{ humanizePercentage $value }} over the last 5 minutes (threshold: 15%). Possible brute force or misconfigured clients."
+
+      - alert: HighClientErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"4.."}[5m])) /
+          sum(rate(http_requests_total[5m])) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 4xx client error rate"
+          description: "4xx error rate is {{ humanizePercentage $value }} over the last 5 minutes (threshold: 20%)."
+
+  - name: vinyl-catalog-integrations
+    rules:
+      - alert: TranslationQuotaExceeded
+        expr: increase(frontend_translate_requests_total{status="quota_exceeded"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          category: integration
+        annotations:
+          summary: "Translation quota exceeded"
+          description: "Google Translate quota has been exceeded in the last 5 minutes. Translation feature is degraded."
+
+      - alert: CoverUploadErrorRate
+        expr: |
+          rate(vinyl_cover_uploads_total{status="error"}[5m]) /
+          rate(vinyl_cover_uploads_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          category: integration
+        annotations:
+          summary: "High cover upload error rate"
+          description: "Cover upload error rate is {{ humanizePercentage $value }} over the last 5 minutes (threshold: 10%)."
+
+      - alert: FavoriteEndpointErrors
+        expr: rate(http_requests_total{path="/api/v1/vinyls/:id/favorite",status=~"5.."}[2m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          category: integration
+        annotations:
+          summary: "Favorite endpoint returning 5xx errors"
+          description: "The favorite toggle endpoint has been returning server errors for 2 minutes."
+
+      - alert: ProfilePhotoUploadErrors
+        expr: increase(vinyl_profile_photo_uploads_total{status="error"}[5m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          category: integration
+        annotations:
+          summary: "Profile photo upload errors"
+          description: "More than 3 profile photo upload errors in the last 5 minutes."
