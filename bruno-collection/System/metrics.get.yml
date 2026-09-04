@@ -1,0 +1,18 @@
+info:
+  name: Get Metrics
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{base_url}}/api/{{api_version}}/metrics"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  API metrics including vinyl count, track count, and storage statistics

@@ -1,0 +1,45 @@
+info:
+  name: Create Vinyl
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{base_url}}/api/{{api_version}}/vinyls"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Dark Side of the Moon",
+        "artist": "Pink Floyd",
+        "year": 1973,
+        "genre": "Progressive Rock",
+        "label": "Harvest",
+        "description": "One of the most influential albums of all time"
+      }
+  auth:
+    type: bearer
+    token: "{{jwt_token}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Creates vinyl successfully", function() {
+          expect(res.getStatus()).to.equal(200);
+          const body = res.getBody();
+          expect(body).to.have.property("id");
+          expect(body).to.have.property("title", "Dark Side of the Moon");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Create a new vinyl record in the catalog
+
+  Authentication: Required
+  Required fields: title, artist, year, genre

@@ -1,0 +1,44 @@
+info:
+  name: Create Track
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}/tracks"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Speak to Me",
+        "duration": "1:30",
+        "side": "A"
+      }
+  auth:
+    type: bearer
+    token: "{{jwt_token}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Creates track successfully", function() {
+          expect(res.getStatus()).to.equal(200);
+          const body = res.getBody();
+          expect(body).to.have.property("id");
+          expect(body).to.have.property("title", "Speak to Me");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Add a new track to a vinyl record
+
+  Authentication: Required
+  Params:
+  - vinyl_id: UUID of the vinyl record
+  Required fields: title

@@ -1,0 +1,41 @@
+info:
+  name: Update Vinyl
+  type: http
+  seq: 8
+
+http:
+  method: PUT
+  url: "{{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Dark Side of the Moon (Remastered)",
+        "description": "Updated description for the remastered version"
+      }
+  auth:
+    type: bearer
+    token: "{{jwt_token}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Updates vinyl successfully", function() {
+          expect(res.getStatus()).to.equal(200);
+          const body = res.getBody();
+          expect(body).to.have.property("id");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Update an existing vinyl record
+
+  Authentication: Required
+  Params:
+  - vinyl_id: UUID of the vinyl record

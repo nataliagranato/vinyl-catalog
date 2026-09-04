@@ -1,0 +1,32 @@
+info:
+  name: Upload Cover Image
+  type: http
+  seq: 18
+
+http:
+  method: POST
+  url: "{{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}/cover"
+  body:
+    type: multipart-form
+    data:
+      - name: cover
+        type: file
+        value:
+          - path/to/cover.jpg
+  auth:
+    type: bearer
+    token: "{{jwt_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Upload a cover image for a vinyl record
+
+  Authentication: Required
+  Params:
+  - vinyl_id: UUID of the vinyl record
+  Notes: Replace 'path/to/cover.jpg' with actual file path

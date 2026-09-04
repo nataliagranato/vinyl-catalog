@@ -1,0 +1,23 @@
+info:
+  name: Get Uploaded File
+  type: http
+  seq: 19
+
+http:
+  method: GET
+  url: "{{base_url}}/uploads/{{filename}}"
+  auth:
+    type: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Serve uploaded files from R2 storage
+
+  Authentication: Not required - Public endpoint
+  Params:
+  - filename: Name of the uploaded file

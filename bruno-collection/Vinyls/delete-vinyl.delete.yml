@@ -1,0 +1,32 @@
+info:
+  name: Delete Vinyl
+  type: http
+  seq: 9
+
+http:
+  method: DELETE
+  url: "{{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}"
+  auth:
+    type: bearer
+    token: "{{jwt_token}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Deletes vinyl successfully", function() {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Delete a vinyl record from the catalog
+
+  Authentication: Required
+  Params:
+  - vinyl_id: UUID of the vinyl record

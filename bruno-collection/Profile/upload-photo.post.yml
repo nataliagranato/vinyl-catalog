@@ -1,0 +1,30 @@
+info:
+  name: Upload Profile Photo
+  type: http
+  seq: 17
+
+http:
+  method: POST
+  url: "{{base_url}}/api/{{api_version}}/profile/photo"
+  body:
+    type: multipart-form
+    data:
+      - name: photo
+        type: file
+        value:
+          - path/to/photo.jpg
+  auth:
+    type: bearer
+    token: "{{jwt_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Upload a profile photo for the user account
+
+  Authentication: Required
+  Notes: Replace 'path/to/photo.jpg' with actual file path

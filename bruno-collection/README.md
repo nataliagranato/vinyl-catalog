@@ -1,6 +1,6 @@
 # Vinyl Catalog API - Bruno Collection
 
-Bruno collection for testing the Vinyl Catalog API locally and in production.
+Bruno collection (OpenCollection YAML `.yml` format, Bruno v3.1+) for testing the Vinyl Catalog API locally and in production.
 
 ## Installation
 
