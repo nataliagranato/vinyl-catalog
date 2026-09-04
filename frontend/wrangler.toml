@@ -1,0 +1,13 @@
+name = "vinyl-catalog-frontend"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Account configuration
+account_id = "4839c9636a58fa9490bbe3d2e686ad98"
+
+# Pages configuration
+pages_build_output_dir = ".next"
+
+# Environment variables
+[vars]
+NEXT_PUBLIC_API_URL = "https://vinyl-catalog-api.nataliagranato.xyz"
