@@ -20,10 +20,12 @@
 
 ## 📁 Documentação
 
-- **[README_CLOUDFLARE.md](./README_CLOUDFLARE.md)** - Guia completo de deployment Cloudflare
-- **[CLOUDFLARE_MIGRATION.md](./CLOUDFLARE_MIGRATION.md)** - Guia de migração do Docker
-- **[SECURITY_AUDIT_12FACTOR.md](./SECURITY_AUDIT_12FACTOR.md)** - Auditoria de segurança 12-Factor
-- **[OPENTELEMETRY_SETUP.md](./OPENTELEMETRY_SETUP.md)** - Guia de configuração OpenTelemetry
+- **[docs/README_CLOUDFLARE.md](./docs/README_CLOUDFLARE.md)** - Guia completo de deployment Cloudflare
+- **[docs/CLOUDFLARE_MIGRATION.md](./docs/CLOUDFLARE_MIGRATION.md)** - Guia de migração do Docker
+- **[docs/SECURITY_AUDIT_12FACTOR.md](./docs/SECURITY_AUDIT_12FACTOR.md)** - Auditoria de segurança 12-Factor
+- **[docs/OPENTELEMETRY_SETUP.md](./docs/OPENTELEMETRY_SETUP.md)** - Guia de configuração OpenTelemetry
+- **[docs/GITHUB_INTEGRATION_GUIDE.md](./docs/GITHUB_INTEGRATION_GUIDE.md)** - Guia de integração GitHub
+- **[docs/SEMANTIC_RELEASE_GUIDE.md](./docs/SEMANTIC_RELEASE_GUIDE.md)** - Guia de versionamento semântico
 
 ## 🔐 Credenciais
 
@@ -147,7 +149,7 @@ Ver `wrangler.toml` para configuração completa:
 ### Database errors
 - Verificar database_id no wrangler.toml
 - Checar health check: `curl /api/v1/health`
-- Re-run schema: `./setup-db.sh`
+- Re-run schema: `./scripts/setup-db.sh`
 
 ## 📞 Suporte
 
