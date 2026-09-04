@@ -1,176 +1,20 @@
-# Vinyl Catalog API
+# Vinyl Catalog — Frontend
 
-🎵 Sistema de catalogação de discos de vinil migrado para Cloudflare Workers com custo zero.
+Branch `frontend`: contém **apenas o frontend** (Next.js) do Vinyl Catalog.
 
-## 📊 Status Atual
+Backend (Cloudflare Workers): https://vinyl-catalog-api.nataliagranato.xyz
 
-- ✅ **Backend:** Deployed na Cloudflare Workers
-- ✅ **Database:** Cloudflare D1 configurado
-- ✅ **Storage:** Cloudflare R2 configurado
-- ✅ **Security:** 9/10 (corrigidas vulnerabilidades críticas)
-- ✅ **Observability:** Full (Logs + Traces + Metrics)
-- ⏳ **Frontend:** Pendente migração para Cloudflare Pages
-
-## 🚀 Deployed Resources
-
-- **API:** https://vinyl-catalog-api.nataliagranato.xyz
-- **Health Check:** /api/v1/health
-- **Metrics:** /api/v1/metrics
-- **Documentation:** https://vinyl-catalog-api.nataliagranato.xyz/
-
-## 📁 Documentação
-
-- **[docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md)** - Guia de desenvolvimento local
-- **[docs/README_CLOUDFLARE.md](./docs/README_CLOUDFLARE.md)** - Guia completo de deployment Cloudflare
-- **[docs/CLOUDFLARE_MIGRATION.md](./docs/CLOUDFLARE_MIGRATION.md)** - Guia de migração do Docker
-- **[docs/SECURITY_AUDIT_12FACTOR.md](./docs/SECURITY_AUDIT_12FACTOR.md)** - Auditoria de segurança 12-Factor
-- **[docs/OPENTELEMETRY_SETUP.md](./docs/OPENTELEMETRY_SETUP.md)** - Guia de configuração OpenTelemetry
-- **[docs/GITHUB_INTEGRATION_GUIDE.md](./docs/GITHUB_INTEGRATION_GUIDE.md)** - Guia de integração GitHub
-- **[docs/SEMANTIC_RELEASE_GUIDE.md](./docs/SEMANTIC_RELEASE_GUIDE.md)** - Guia de versionamento semântico
-
-## 🔐 Credenciais
-
-Ver arquivo `.secrets` (não versionado) para credenciais de login atuais.
-
-## 🛠️ Quick Start
+## Env
 
 ```bash
-# Instalar dependências
-npm install
-
-# Deploy para Cloudflare
-npm run deploy
-
-# Ver logs em tempo real
-npx wrangler tail
-
-# Build
-npm run build
+API_URL=https://vinyl-catalog-api.nataliagranato.xyz
+NEXT_PUBLIC_API_URL=https://vinyl-catalog-api.nataliagranato.xyz
 ```
 
-## 📋 API Endpoints
+## Dev
 
-### System
-- `GET /` - Documentação da API
-- `GET /api/v1/health` - Health check
-- `GET /api/v1/metrics` - Métricas
-
-### Authentication
-- `POST /api/v1/auth/login` - Login JWT
-
-### Vinyls (Requires Auth)
-- `GET /api/v1/vinyls` - Listar discos
-- `POST /api/v1/vinyls` - Criar disco
-- `PUT /api/v1/vinyls/:id` - Atualizar disco
-- `DELETE /api/v1/vinyls/:id` - Remover disco
-
-### Profile
-- `GET /api/v1/profile` - Perfil público
-- `PUT /api/v1/profile` - Atualizar perfil (auth)
-
-### Uploads (Requires Auth)
-- `POST /api/v1/vinyls/:id/cover` - Upload capa
-- `GET /uploads/:filename` - Servir arquivos
-
-## 🔍 Observabilidade
-
-### Dashboard Cloudflare
-1. Acesse: https://dash.cloudflare.com
-2. Workers & Pages → vinyl-catalog-api → Observability
-3. Visualize Logs, Traces e Metrics
-
-### CLI
 ```bash
-npx wrangler tail
-```
-
-## 💰 Custo
-
-**Total: $0/mês** (Cloudflare Free Tier)
-
-- Workers: 100k requests/day (grátis)
-- D1: 5GB storage (grátis)
-- R2: 10GB storage (grátis)
-- Observability: Logs + Traces (grátis)
-
-## 📊 Métricas de Segurança
-
-- **Score:** 9/10
-- **Conformidade 12-Factor:** 78%
-- **Vulnerabilidades Críticas:** 0
-- **JWT:** HMAC-SHA256 (Web Crypto API)
-- **Credenciais:** Cryptographically secure
-
-## 🎯 Stack Tecnológico
-
-- **Backend:** TypeScript (Cloudflare Workers)
-- **Database:** Cloudflare D1 (SQLite)
-- **Storage:** Cloudflare R2
-- **Observability:** Workers Logs + Traces + OpenTelemetry
-- **Auth:** JWT com Web Crypto API
-- **Router:** itty-router
-
-## 📖 Desenvolvimento
-
-### Desenvolvimento Local (Sem Docker)
-
-**Backend (Cloudflare Workers):**
-```bash
-# Terminal 1
-npm run dev
-# Backend roda em http://localhost:8787
-```
-
-**Frontend (Next.js):**
-```bash
-# Terminal 2
 cd frontend
+npm install
 npm run dev
-# Frontend roda em http://localhost:3000
 ```
-
-Veja [docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md) para guia completo.
-
-### Testes e Lint
-
-```bash
-npm test           # Rodar testes
-npm run lint       # Lint do código
-npm run format     # Formatar código
-```
-
-## 🔧 Configuração
-
-Ver `wrangler.toml` para configuração completa:
-- Account ID
-- Database bindings
-- R2 bindings
-- Environment variables
-- Observability settings
-
-## 🚨 Troubleshooting
-
-### Login falha
-- Verificar `.secrets` para credenciais corretas
-- Checar JWT_SECRET no wrangler.toml
-- Verificar se token não expirou (24h)
-
-### Observabilidade não funciona
-- Verificar Wrangler v4+: `npx wrangler --version`
-- Checar seção [observability] no wrangler.toml
-- Acessar dashboard Cloudflare
-
-### Database errors
-- Verificar database_id no wrangler.toml
-- Checar health check: `curl /api/v1/health`
-- Re-run schema: `./scripts/setup-db.sh`
-
-## 📞 Suporte
-
-- Cloudflare Docs: https://developers.cloudflare.com/
-- Dashboard: https://dash.cloudflare.com
-- Project Issues: GitHub repository
-
----
-
-**Deployed with [Devin](https://devin.ai)**

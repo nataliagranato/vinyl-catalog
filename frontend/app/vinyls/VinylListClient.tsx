@@ -11,8 +11,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { filterVinyls, Filters } from "@/lib/filterVinyls";
 import { useToast } from "@/components/ToastProvider";
 import { logoutRequest } from "@/lib/auth";
-import { getTracer } from "@/lib/telemetry";
-import { SpanStatusCode } from "@opentelemetry/api";
+import { getTracer, SpanStatusCode } from "@/lib/telemetry";
 
 type Props = { initialVinyls: VinylResponse[]; initialFavoriteIds?: string[] };
 

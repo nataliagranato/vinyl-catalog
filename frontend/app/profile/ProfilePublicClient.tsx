@@ -168,16 +168,16 @@ export function ProfilePublicClient({ profile }: { profile: ProfileResponse }) {
             <div className="mb-8">
               <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Links</h2>
               <div className="flex flex-col gap-2">
-                {profile.links.map((link) => (
+                {profile.links.map((link, index) => (
                   <a
-                    key={link}
-                    href={link.startsWith("http") ? link : `https://${link}`}
+                    key={`${link.title}-${index}`}
+                    href={link.url.startsWith("http") ? link.url : `https://${link.url}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors"
                   >
                     <ExternalLink size={13} />
-                    {link}
+                    {link.title}
                   </a>
                 ))}
               </div>

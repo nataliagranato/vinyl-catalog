@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "env": {
+    "API_URL": "https://vinyl-catalog-api.nataliagranato.xyz",
+    "NEXT_PUBLIC_API_URL": "https://vinyl-catalog-api.nataliagranato.xyz"
+  }
+}

@@ -16,9 +16,10 @@ export default function ProfileEditPage() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [links, setLinks] = useState<string[]>([]);
+  const [links, setLinks] = useState<Array<{ title: string; url: string }>>([]);
   const [genres, setGenres] = useState<string[]>([]);
-  const [newLink, setNewLink] = useState("");
+  const [newLinkTitle, setNewLinkTitle] = useState("");
+  const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newGenre, setNewGenre] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -102,7 +103,7 @@ export default function ProfileEditPage() {
               id="display_name"
               label="Display Name"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
               placeholder="Your name"
             />
 
@@ -111,7 +112,7 @@ export default function ProfileEditPage() {
               <label className="text-sm font-medium text-muted">Bio</label>
               <textarea
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBio(e.target.value)}
                 rows={3}
                 placeholder="Tell the world about your music taste…"
                 className="bg-background border border-border rounded px-4 py-2.5 text-foreground placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none text-sm"
@@ -132,8 +133,8 @@ export default function ProfileEditPage() {
               <div className="flex gap-2">
                 <input
                   value={newGenre}
-                  onChange={(e) => setNewGenre(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && newGenre.trim()) { setGenres([...genres, newGenre.trim()]); setNewGenre(""); } }}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewGenre(e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter" && newGenre.trim()) { setGenres([...genres, newGenre.trim()]); setNewGenre(""); } }}
                   placeholder="Add genre (Enter to add)"
                   className="flex-1 bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                 />
@@ -148,22 +149,27 @@ export default function ProfileEditPage() {
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-muted">Links</label>
               <div className="flex flex-col gap-1.5 mb-2">
-                {links.map((l) => (
-                  <div key={l} className="flex items-center gap-2">
-                    <span className="flex-1 text-sm text-accent truncate">{l}</span>
-                    <button onClick={() => setLinks(links.filter((x) => x !== l))} className="text-muted hover:text-red-400"><X size={12} /></button>
+                {links.map((l, index) => (
+                  <div key={`${l.title}-${index}`} className="flex items-center gap-2">
+                    <span className="flex-1 text-sm text-accent truncate">{l.title}: {l.url}</span>
+                    <button onClick={() => setLinks(links.filter((_, i) => i !== index))} className="text-muted hover:text-red-400"><X size={12} /></button>
                   </div>
                 ))}
               </div>
               <div className="flex gap-2">
                 <input
-                  value={newLink}
-                  onChange={(e) => setNewLink(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && newLink.trim()) { setLinks([...links, newLink.trim()]); setNewLink(""); } }}
-                  placeholder="https://… (Enter to add)"
+                  value={newLinkTitle}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLinkTitle(e.target.value)}
+                  placeholder="Title"
                   className="flex-1 bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                 />
-                <button onClick={() => { if (newLink.trim()) { setLinks([...links, newLink.trim()]); setNewLink(""); } }}
+                <input
+                  value={newLinkUrl}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLinkUrl(e.target.value)}
+                  placeholder="URL"
+                  className="flex-1 bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                />
+                <button onClick={() => { if (newLinkTitle.trim() && newLinkUrl.trim()) { setLinks([...links, { title: newLinkTitle.trim(), url: newLinkUrl.trim() }]); setNewLinkTitle(""); setNewLinkUrl(""); } }}
                   className="p-1.5 border border-border rounded hover:border-accent text-muted hover:text-accent transition-colors">
                   <Plus size={16} />
                 </button>

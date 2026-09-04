@@ -2,9 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 export async function GET() {
-  const res = await fetch(`${process.env.API_URL}/api/v1/profile`);
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  try {
+    const base = process.env.API_URL ?? '';
+    const res = await fetch(`${base}/api/v1/profile`, {
+      headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' },
+    });
+    const text = await res.text();
+    try {
+      return NextResponse.json(JSON.parse(text), { status: res.status });
+    } catch {
+      return NextResponse.json(
+        { error: 'proxy_bad_json', status: res.status, preview: text.slice(0, 500) },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    return NextResponse.json(
+      { error: 'proxy_failed', hasApiUrl: !!process.env.API_URL, detail: String(e) },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(req: NextRequest) {
