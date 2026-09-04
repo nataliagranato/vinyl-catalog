@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:cloudflare": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "deploy:cloudflare": "npx wrangler pages deploy .next --project-name=vinyl-catalog-frontend"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

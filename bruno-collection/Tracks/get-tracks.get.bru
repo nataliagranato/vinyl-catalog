@@ -1,0 +1,26 @@
+meta {
+  name: Get Tracks
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}/tracks
+  auth: bearer {{jwt_token}}
+}
+
+body:json {
+  "description": "Retrieve all tracks associated with a specific vinyl record",
+  "authentication": "Required",
+  "params": {
+    "vinyl_id": "UUID of the vinyl record"
+  }
+}
+
+tests {
+  test("Returns array of tracks", function() {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.be.an("array");
+  });
+}

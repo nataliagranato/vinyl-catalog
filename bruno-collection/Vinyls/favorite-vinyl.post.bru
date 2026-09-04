@@ -1,0 +1,26 @@
+meta {
+  name: Toggle Favorite
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}/favorite
+  auth: bearer {{jwt_token}}
+}
+
+body:json {
+  "description": "Toggle the favorite status of a vinyl record",
+  "authentication": "Required",
+  "params": {
+    "vinyl_id": "UUID of the vinyl record"
+  }
+}
+
+tests {
+  test("Toggles favorite successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.have.property("favorite");
+  });
+}

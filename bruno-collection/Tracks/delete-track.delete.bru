@@ -1,0 +1,25 @@
+meta {
+  name: Delete Track
+  type: http
+  seq: 14
+}
+
+delete {
+  url: {{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}/tracks/{{track_id}}
+  auth: bearer {{jwt_token}}
+}
+
+body:json {
+  "description": "Remove a track from a vinyl record",
+  "authentication": "Required",
+  "params": {
+    "vinyl_id": "UUID of the vinyl record",
+    "track_id": "UUID of the track"
+  }
+}
+
+tests {
+  test("Deletes track successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

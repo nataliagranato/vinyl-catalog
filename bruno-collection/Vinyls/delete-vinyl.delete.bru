@@ -1,0 +1,24 @@
+meta {
+  name: Delete Vinyl
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}
+  auth: bearer {{jwt_token}}
+}
+
+body:json {
+  "description": "Delete a vinyl record from the catalog",
+  "authentication": "Required",
+  "params": {
+    "vinyl_id": "UUID of the vinyl record"
+  }
+}
+
+tests {
+  test("Deletes vinyl successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

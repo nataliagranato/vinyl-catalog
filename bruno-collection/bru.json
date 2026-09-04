@@ -1,0 +1,37 @@
+{
+  "version": "1",
+  "name": "Vinyl Catalog API",
+  "type": "collection",
+  "environments": [
+    {
+      "name": "Local",
+      "values": [
+        {
+          "key": "base_url",
+          "value": "http://localhost:8787",
+          "enabled": true
+        },
+        {
+          "key": "api_version",
+          "value": "v1",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "name": "Production",
+      "values": [
+        {
+          "key": "base_url",
+          "value": "https://vinyl-catalog-api.nataliagranato.xyz",
+          "enabled": true
+        },
+        {
+          "key": "api_version",
+          "value": "v1",
+          "enabled": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Update Track
+  type: http
+  seq: 13
+}
+
+put {
+  url: {{base_url}}/api/{{api_version}}/vinyls/{{vinyl_id}}/tracks/{{track_id}}
+  body: {
+    title: "Speak to Me (Instrumental)",
+    duration: "1:35"
+  }
+  auth: bearer {{jwt_token}}
+}
+
+body:json {
+  "description": "Update an existing track within a vinyl record",
+  "authentication": "Required",
+  "params": {
+    "vinyl_id": "UUID of the vinyl record",
+    "track_id": "UUID of the track"
+  }
+}
+
+tests {
+  test("Updates track successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+  });
+}

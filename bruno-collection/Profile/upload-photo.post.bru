@@ -1,0 +1,23 @@
+meta {
+  name: Upload Profile Photo
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{base_url}}/api/{{api_version}}/profile/photo
+  body: multipart
+  files: [
+    {
+      name: "photo",
+      file: "path/to/photo.jpg"
+    }
+  ]
+  auth: bearer {{jwt_token}}
+}
+
+body:json {
+  "description": "Upload a profile photo for the user account",
+  "authentication": "Required",
+  "notes": "Replace 'path/to/photo.jpg' with actual file path"
+}

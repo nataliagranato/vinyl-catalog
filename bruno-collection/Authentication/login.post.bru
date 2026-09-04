@@ -1,0 +1,36 @@
+meta {
+  name: Login
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/{{api_version}}/auth/login
+  body: {
+    username: "admin",
+    password: "TWTO/VsWHuV+IuKlYXsZTw=="
+  }
+  auth: none
+}
+
+body:json {
+  "description": "Authenticate user and return JWT token for subsequent requests",
+  "expected_response": {
+    "token": "JWT token string"
+  },
+  "notes": "Save the token from response to use in authenticated requests"
+}
+
+tests {
+  test("Login successful", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.have.property("token");
+  });
+  
+  test("Token is valid JWT", function() {
+    const body = res.getBody();
+    const token = body.token;
+    expect(token).to.be.a("string");
+    expect(token).to.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
+  });
+}

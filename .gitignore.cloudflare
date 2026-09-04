@@ -1,0 +1,35 @@
+# Cloudflare-specific ignore patterns
+# Add these to your main .gitignore
+
+# Wrangler
+.wrangler/
+wrangler.toml.local
+wrangler.local.toml
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Local development
+.env.local
+.env.*.local
+
+# Secrets and sensitive data
+.secrets
+*.secret
+.env
+
+# Node modules (if using Node.js for Workers)
+node_modules/
+
+# Test coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

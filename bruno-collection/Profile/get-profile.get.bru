@@ -1,0 +1,23 @@
+meta {
+  name: Get Profile
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{base_url}}/api/{{api_version}}/profile
+  auth: none
+}
+
+body:json {
+  "description": "Retrieve the public profile information",
+  "authentication": "Not required - Public endpoint"
+}
+
+tests {
+  test("Returns profile data", function() {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.be.an("object");
+  });
+}

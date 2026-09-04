@@ -1,0 +1,27 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 16
+}
+
+put {
+  url: {{base_url}}/api/{{api_version}}/profile
+  body: {
+    username: "vinylcollector",
+    bio: "Passionate vinyl record collector and music enthusiast"
+  }
+  auth: bearer {{jwt_token}}
+}
+
+body:json {
+  "description": "Update the user profile information",
+  "authentication": "Required"
+}
+
+tests {
+  test("Updates profile successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body).to.be.an("object");
+  });
+}
