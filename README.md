@@ -20,6 +20,7 @@
 
 ## 📁 Documentação
 
+- **[docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md)** - Guia de desenvolvimento local
 - **[docs/README_CLOUDFLARE.md](./docs/README_CLOUDFLARE.md)** - Guia completo de deployment Cloudflare
 - **[docs/CLOUDFLARE_MIGRATION.md](./docs/CLOUDFLARE_MIGRATION.md)** - Guia de migração do Docker
 - **[docs/SECURITY_AUDIT_12FACTOR.md](./docs/SECURITY_AUDIT_12FACTOR.md)** - Auditoria de segurança 12-Factor
@@ -111,18 +112,31 @@ npx wrangler tail
 
 ## 📖 Desenvolvimento
 
+### Desenvolvimento Local (Sem Docker)
+
+**Backend (Cloudflare Workers):**
 ```bash
-# Desenvolvimento local
+# Terminal 1
 npm run dev
+# Backend roda em http://localhost:8787
+```
 
-# Testes
-npm test
+**Frontend (Next.js):**
+```bash
+# Terminal 2
+cd frontend
+npm run dev
+# Frontend roda em http://localhost:3000
+```
 
-# Lint
-npm run lint
+Veja [docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md) para guia completo.
 
-# Format
-npm run format
+### Testes e Lint
+
+```bash
+npm test           # Rodar testes
+npm run lint       # Lint do código
+npm run format     # Formatar código
 ```
 
 ## 🔧 Configuração
