@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Gera documentação (ADR, Runbook, README revisado) com IA (Verboo/glm-5.3-flash)
-# e abre um PR na branch correspondente.
-# Uso: ./scripts/ai-docs.sh "main,develop,frontend"
+# analisando a branch alvo e abre um PR para ela.
+# Uso: ./scripts/ai-docs.sh [branch-alvo]   (padrão: main)
 set -euo pipefail
 
 MODEL="glm-5.3-flash"
 : "${VERBOO_API_KEY:?Defina VERBOO_API_KEY}"
 : "${GH_TOKEN:?Defina GH_TOKEN}"
 
-BRANCHES="$1"
+TARGET_BRANCH="${1:-main}"
+HEAD_BRANCH="ai/docs"
 
 git config user.name "ai-docs-bot"
 git config user.email "actions@github.com"
@@ -22,78 +23,75 @@ Inclua obrigatoriamente:
 4. README.md — o README existente, revisado e aprimorado pela IA (mantenha as informações corretas, corrija o que estiver desatualizado, melhore organização e clareza). Se não houver README no contexto, crie um.
 Regras: seja técnico e conciso; baseie-se APENAS no contexto fornecido; não invente módulos ou endpoints que não aparecem no contexto.'
 
-for BR in $(echo "$BRANCHES" | tr ',' ' '); do
-  echo "=== Branch: $BR ==="
-  HEAD_BRANCH="ai/docs-$BR"
-  git fetch origin "$BR" --quiet
-  if gh pr list --head "$HEAD_BRANCH" --json state --jq '.[].state' | grep -q OPEN; then
-    echo "PR já aberto para $HEAD_BRANCH, pulando."
-    continue
-  fi
-  git checkout -B "$HEAD_BRANCH" "origin/$BR" --quiet
+echo "=== Branch alvo: $TARGET_BRANCH ==="
+git fetch origin "$TARGET_BRANCH" --quiet
+if gh pr list --head "$HEAD_BRANCH" --json state --jq '.[].state' | grep -q OPEN; then
+  echo "PR já aberto para $HEAD_BRANCH, encerrando."
+  exit 0
+fi
+git checkout -B "$HEAD_BRANCH" "origin/$TARGET_BRANCH" --quiet
 
-  CONTEXT=$( {
-    echo "Branch: $BR"
-    echo "=== Arquivos do repositório ==="
-    git ls-files | head -120
-    echo "=== README.md (até 150 linhas) ==="
-    head -150 README.md 2>/dev/null || echo "(sem README)"
-    echo "=== go.mod ==="
-    head -40 go.mod 2>/dev/null || true
-    echo "=== docker-compose.yml ==="
-    head -60 docker-compose.yml 2>/dev/null || true
-    echo "=== docker-compose.yml fim ==="
-    echo "=== Principais arquivos Go (imports e declarações) ==="
-    for f in $(git ls-files '*.go' | head -15); do
-      echo "--- $f ---"; head -30 "$f"
-    done
-  } )
-
-  PAYLOAD=$(jq -n \
-    --arg model "$MODEL" \
-    --arg sys "$SYSTEM_PROMPT" \
-    --arg ctx "$CONTEXT" \
-    '{model:$model, messages:[{role:"system",content:$sys},{role:"user",content:$ctx}], max_tokens:8000}')
-
-  CONTENT=""
-  for ATTEMPT in 1 2 3 4; do
-    RESP=$(curl -s --max-time 600 https://code.verboo.ai/router/v1/chat/completions \
-      -H "Authorization: Bearer $VERBOO_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d "$PAYLOAD")
-    CONTENT=$(echo "$RESP" | jq -r '.choices[0].message.content // empty')
-    [ -n "$CONTENT" ] && break
-    echo "Tentativa $ATTEMPT falhou: $(echo "$RESP" | head -c 200). Aguardando $((ATTEMPT*30))s..." >&2
-    sleep $((ATTEMPT*30))
+CONTEXT=$( {
+  echo "Branch: $TARGET_BRANCH"
+  echo "=== Arquivos do repositório ==="
+  git ls-files | head -120
+  echo "=== README.md (até 150 linhas) ==="
+  head -150 README.md 2>/dev/null || echo "(sem README)"
+  echo "=== go.mod ==="
+  head -40 go.mod 2>/dev/null || true
+  echo "=== docker-compose.yml ==="
+  head -60 docker-compose.yml 2>/dev/null || true
+  echo "=== Principais arquivos Go (imports e declarações) ==="
+  for f in $(git ls-files '*.go' | head -15); do
+    echo "--- $f ---"; head -30 "$f"
   done
-  if [ -z "$CONTENT" ]; then
-    echo "ERRO: IA não respondeu após 4 tentativas para $BR" >&2
-    continue
-  fi
-  # Remove cercas de código caso o modelo insista em markdown
-  CONTENT=${CONTENT#\`\`\`json}
-  CONTENT=${CONTENT#\`\`\`}
-  CONTENT=${CONTENT%\`\`\`}
+} )
 
-  echo "$CONTENT" | jq -r '.files[] | @base64' | while read -r ENC; do
-    FILE=$(echo "$ENC" | base64 -d)
-    PATH_=$(echo "$FILE" | jq -r '.path')
-    mkdir -p "$(dirname "$PATH_")"
-    echo "$FILE" | jq -j '.content' > "$PATH_"
-    echo "  gerado: $PATH_"
-  done
+PAYLOAD=$(jq -n \
+  --arg model "$MODEL" \
+  --arg sys "$SYSTEM_PROMPT" \
+  --arg ctx "$CONTEXT" \
+  '{model:$model, messages:[{role:"system",content:$sys},{role:"user",content:$ctx}], max_tokens:8000}')
 
-  git add -A
-  if git diff --cached --quiet; then
-    echo "Nada a commitar em $BR."
-    continue
-  fi
-  git commit -m "docs: documentação gerada por IA (ADR, runbook, README) — branch $BR" --quiet
-  # --force: branch efêmera gerada por esta action; pode existir de execuções anteriores
-  git push --force origin "$HEAD_BRANCH" --quiet
-  gh pr create --base "$BR" --head "$HEAD_BRANCH" \
-    --title "docs(ai): documentação gerada por IA para $BR" \
-    --body "Documentação gerada automaticamente pela action de IA (Verboo / $MODEL) analisando a branch \`$BR\`.
+CONTENT=""
+for ATTEMPT in 1 2 3 4; do
+  RESP=$(curl -s --max-time 600 https://code.verboo.ai/router/v1/chat/completions \
+    -H "Authorization: Bearer $VERBOO_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD")
+  CONTENT=$(echo "$RESP" | jq -r '.choices[0].message.content // empty')
+  [ -n "$CONTENT" ] && break
+  echo "Tentativa $ATTEMPT falhou: $(echo "$RESP" | head -c 200). Aguardando $((ATTEMPT*30))s..." >&2
+  sleep $((ATTEMPT*30))
+done
+if [ -z "$CONTENT" ]; then
+  echo "ERRO: IA não respondeu após 4 tentativas" >&2
+  exit 1
+fi
+# Remove cercas de código caso o modelo insista em markdown
+CONTENT=${CONTENT#\`\`\`json}
+CONTENT=${CONTENT#\`\`\`}
+CONTENT=${CONTENT%\`\`\`}
+
+echo "$CONTENT" | jq -r '.files[] | @base64' | while read -r ENC; do
+  FILE=$(echo "$ENC" | base64 -d)
+  PATH_=$(echo "$FILE" | jq -r '.path')
+  mkdir -p "$(dirname "$PATH_")"
+  echo "$FILE" | jq -j '.content' > "$PATH_"
+  echo "  gerado: $PATH_"
+done
+
+git add -A
+if git diff --cached --quiet; then
+  echo "Nada a commitar."
+  exit 0
+fi
+git commit -m "docs: documentação gerada por IA (ADR, runbook, README)" --quiet
+# --force: branch efêmera gerada por esta action; pode existir de execuções anteriores
+git push --force origin "$HEAD_BRANCH" --quiet
+gh pr create --base "$TARGET_BRANCH" --head "$HEAD_BRANCH" \
+  --title "docs(ai): documentação gerada por IA" \
+  --body "Documentação gerada automaticamente pela action de IA (Verboo / $MODEL) analisando a branch \`$TARGET_BRANCH\`.
 
 Inclui:
 - ADR (\`docs/adr/\`)
@@ -102,6 +100,5 @@ Inclui:
 - README revisado
 
 > Gerado na aula de Platform Engineering. Revise antes de aprovar." \
-    > /dev/null && echo "PR aberto: $BR <- $HEAD_BRANCH"
-done
+  > /dev/null && echo "PR aberto: $TARGET_BRANCH <- $HEAD_BRANCH"
 echo "Concluído."
