@@ -56,18 +56,18 @@ for BR in $(echo "$BRANCHES" | tr ',' ' '); do
     '{model:$model, messages:[{role:"system",content:$sys},{role:"user",content:$ctx}], max_tokens:8000}')
 
   CONTENT=""
-  for ATTEMPT in 1 2 3; do
+  for ATTEMPT in 1 2 3 4; do
     RESP=$(curl -s --max-time 600 https://code.verboo.ai/router/v1/chat/completions \
       -H "Authorization: Bearer $VERBOO_API_KEY" \
       -H "Content-Type: application/json" \
       -d "$PAYLOAD")
     CONTENT=$(echo "$RESP" | jq -r '.choices[0].message.content // empty')
     [ -n "$CONTENT" ] && break
-    echo "Tentativa $ATTEMPT falhou: $(echo "$RESP" | head -c 200). Aguardando 15s..." >&2
-    sleep 15
+    echo "Tentativa $ATTEMPT falhou: $(echo "$RESP" | head -c 200). Aguardando $((ATTEMPT*30))s..." >&2
+    sleep $((ATTEMPT*30))
   done
   if [ -z "$CONTENT" ]; then
-    echo "ERRO: IA não respondeu após 3 tentativas para $BR" >&2
+    echo "ERRO: IA não respondeu após 4 tentativas para $BR" >&2
     continue
   fi
   # Remove cercas de código caso o modelo insista em markdown
@@ -89,7 +89,8 @@ for BR in $(echo "$BRANCHES" | tr ',' ' '); do
     continue
   fi
   git commit -m "docs: documentação gerada por IA (ADR, runbook, README) — branch $BR" --quiet
-  git push origin "$HEAD_BRANCH" --quiet
+  # --force: branch efêmera gerada por esta action; pode existir de execuções anteriores
+  git push --force origin "$HEAD_BRANCH" --quiet
   gh pr create --base "$BR" --head "$HEAD_BRANCH" \
     --title "docs(ai): documentação gerada por IA para $BR" \
     --body "Documentação gerada automaticamente pela action de IA (Verboo / $MODEL) analisando a branch \`$BR\`.
