@@ -1,103 +1,102 @@
-# Aula: GitHub Action de Documentação com IA
+# GitHub Action reutilizável de documentação com IA
 
-Workflow que varre as branches do repositório, usa IA (Verboo / `glm-5.3-flash`) para gerar documentação técnica e abre um Pull Request em cada branch analisada.
+O `vinyl-catalog` usa a Action TypeScript `Tech-Preta/actions/ai-docs@v1` para analisar o projeto, gerar documentação técnica e abrir ou atualizar um pull request para a `main`.
 
-## O que a action faz
+## Responsabilidades
 
-1. Disparada manualmente (`workflow_dispatch`), com opção de escolher as branches (padrão: todas, exceto as geradas por ela mesma).
-2. Para cada branch, cria uma branch temporária `ai/docs-<branch>`.
-3. Monta um contexto do repositório (lista de arquivos, README, `go.mod`, `docker-compose.yml`, principais arquivos Go) e envia para a API da Verboo.
-4. A IA retorna JSON com 4 arquivos:
-   - `docs/adr/ADR-001-decisoes-arquiteturais.md` — ADRs (Contexto, Decisão, Consequências)
-   - `docs/runbooks/runbook.md` — runbook operacional
-   - `docs/ai-analysis.md` — análise da stack, riscos e sugestões
-   - `README.md` — README revisado
-5. Commita, dá push e abre um PR `ai/docs-<branch>` → `<branch>`.
+O fluxo está dividido entre dois repositórios:
 
-## Estrutura dos arquivos
+- `Tech-Preta/actions`: implementa a coleta segura de contexto, integração com APIs compatíveis com OpenAI, validação da resposta e publicação do PR via API do GitHub.
+- `vinyl-catalog`: define o prompt específico, os arquivos que podem ser alterados e o disparo manual.
 
-```
-.github/workflows/ai-docs.yml   # workflow (trigger, permissões, secrets)
-scripts/ai-docs.sh              # lógica: loop de branches, chamada à API, PR
+Não há script local para gerar a documentação. O bundle JavaScript versionado na Action contém toda a lógica de runtime.
+
+## Arquivos locais
+
+```text
+.github/ai-docs-prompt.md       # requisitos de documentação deste projeto
+.github/workflows/ai-docs.yml   # workflow manual consumidor
 ```
 
-## Passo a passo
+## Documentos autorizados
 
-### 1. Criar a chave da API
+A allowlist do workflow permite que a IA altere somente:
 
-Gere a API key no painel da Verboo (`https://code.verboo.ai`). Ela nunca vai para o código — só para os Secrets do GitHub.
+- `docs/adr/ADR-001-decisoes-arquiteturais.md`
+- `docs/runbooks/runbook.md`
+- `docs/ai-analysis.md`
+- `README.md`
+- `docs/swagger/swagger.yaml`
 
-### 2. Cadastrar o secret no repositório
+Qualquer outro caminho retornado pelo modelo faz a execução falhar antes da criação de branch ou commit.
 
-Via CLI (ou web: Settings → Secrets and variables → Actions → New repository secret):
+## Credenciais
 
-```bash
-gh secret set VERBOO_API_KEY -R SEU_USUARIO/SEU_REPO --body "vbk_pro_..."
-```
+Cadastre estes Actions secrets no repositório:
 
-### 3. Criar o workflow
+- `VERBOO_API_KEY`: chave do provedor de IA.
+- `GH_TOKEN`: token com acesso ao repositório e permissão para criar branches e pull requests.
 
-`.github/workflows/ai-docs.yml`:
+O workflow declara:
 
 ```yaml
-name: Documentação com IA
-
-on:
-  workflow_dispatch:
-    inputs:
-      branches:
-        description: 'Branches a documentar (separadas por vírgula) ou "all"'
-        required: false
-        default: 'all'
-
 permissions:
-  contents: write      # push das branches ai/docs-*
-  pull-requests: write # abrir os PRs
+  contents: write
+  pull-requests: write
 ```
 
-Pontos-chave:
+As credenciais são fornecidas como variáveis de ambiente e mascaradas pela Action. Nunca devem ser colocadas no prompt ou commitadas.
 
-- **`workflow_dispatch`**: execução manual — evita custo de API em cada push.
-- **`permissions` explícitos**: sem isso o `GITHUB_TOKEN` não consegue push nem abrir PR.
-- **`GITHUB_TOKEN`**: token temporário gerado pelo próprio GitHub na execução. Não precisa de PAT.
+## Disparo manual
 
-### 4. Criar o script `scripts/ai-docs.sh`
+Na interface do GitHub, acesse **Actions → Documentação com IA → Run workflow**.
 
-Responsabilidades do script (veja o arquivo completo no repo):
-
-| Bloco | O que faz |
-|---|---|
-| Listagem de branches | `gh api repos/$REPO/branches` filtra as `ai/docs-*` |
-| Contexto | `git ls-files` + trechos do README, go.mod, compose, fontes Go |
-| Payload | `jq -n --arg` monta o JSON com system prompt + contexto |
-| Chamada | `curl` → `POST /router/v1/chat/completions` (API compatível com OpenAI) |
-| Parse | Extrai `.choices[0].message.content`, remove cercas ` ``` `, valida com `jq` |
-| Git | `git checkout -B ai/docs-<branch>`, commit, push |
-| PR | `gh pr create --base <branch> --head ai/docs-<branch>` |
-
-O prompt exige resposta **apenas em JSON**: `{"files":[{"path":"...","content":"..."}]}` — isso torna a saída determinística e parseável.
-
-### 5. Disparar
+Pela CLI:
 
 ```bash
-gh workflow run "Documentação com IA" -R SEU_USUARIO/SEU_REPO -f branches=all
-# ou branches específicas:
-gh workflow run "Documentação com IA" -R SEU_USUARIO/SEU_REPO -f branches="main,develop"
+gh workflow run ai-docs.yml -R nataliagranato/vinyl-catalog --ref main
+gh run watch -R nataliagranato/vinyl-catalog --exit-status
 ```
 
-### 6. Verificar
+## Fluxo da execução
 
-- Aba **Actions**: acompanhe a execução.
-- Aba **Pull requests**: um PR por branch analisada, com os 4 arquivos gerados.
+1. `actions/checkout` disponibiliza o estado da `main`.
+2. A Action lê `.github/ai-docs-prompt.md`.
+3. Apenas arquivos rastreados e seguros entram no contexto; segredos, binários, dependências, artefatos e arquivos grandes são excluídos.
+4. A API Verboo recebe o prompt e o contexto usando o modelo padrão `glm-5.3-flash`.
+5. A resposta JSON é validada quanto ao schema, volume, caminhos e allowlist.
+6. A Action compara o conteúdo com a `main`.
+7. Se houver mudanças, um único commit é publicado em `ai/docs`.
+8. Um PR para `main` é criado ou o PR aberto existente é atualizado.
 
-## Pontos de discussão em aula
+Se o conteúdo gerado for idêntico ao existente, não há novo commit. A Action nunca faz merge automático.
 
-1. **Segurança de tokens**: a API key fica em Secret, nunca em código. O `GITHUB_TOKEN` do Actions tem escopo limitado ao repositório e permissões explícitas.
-2. **Saída estruturada**: exigir JSON do LLM + validar com `jq` é o padrão para integrar IA em pipelines. Texto livre quebra o pipeline.
-3. **Idempotência**: se já existe PR aberto para `ai/docs-<branch>`, o script pula. Rodar de novo não duplica PRs.
-4. **Limites**: `max_tokens: 8000`; contexto truncado (`head`) para caber no prompt — em repos grandes, vale mandar só os arquivos-chave.
-5. **IA que revisa IA**: os PRs são sugestões — revisão humana continua obrigatória antes do merge.
+## Troca de provedor ou modelo
 
-## Segurança da conta (após a aula)
+A Verboo é o padrão, mas a Action aceita qualquer endpoint de chat completions compatível com OpenAI:
 
-Revogue qualquer PAT que tenha sido compartilhado em chat/screenshots: GitHub → Settings → Developer settings → Personal access tokens → Delete.
+```yaml
+with:
+  api-base-url: https://provedor.example/v1
+  model: modelo-documentacao
+```
+
+Por compatibilidade, a chave continua sendo fornecida em `VERBOO_API_KEY`.
+
+## Troubleshooting
+
+- **Action não encontrada:** `Tech-Preta/actions` precisa estar público para consumo por um repositório fora da organização, ou a política de compartilhamento precisa autorizar o consumidor.
+- **401/403 da IA:** revise `VERBOO_API_KEY`, o endpoint e o acesso ao modelo.
+- **403 do GitHub:** revise `GH_TOKEN`, as permissões do workflow e as configurações de Actions da organização.
+- **429:** a Action realiza retentativas; persistência indica limite de cota.
+- **JSON inválido ou truncado:** reduza o contexto ou revise `max-output-tokens`.
+- **Caminho rejeitado:** confirme que o arquivo está na allowlist do workflow.
+
+## Revisão humana
+
+O PR é uma proposta. Antes do merge, confira principalmente:
+
+- se os endpoints do Swagger existem no código;
+- se comandos e variáveis do runbook são reais;
+- se o README não remove informações relevantes;
+- se riscos e recomendações estão claramente separados do estado atual do projeto.

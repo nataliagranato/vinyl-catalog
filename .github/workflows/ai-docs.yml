@@ -12,13 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Gerar documentação e abrir PR
+        uses: Tech-Preta/actions/ai-docs@v1
+        with:
+          prompt-file: .github/ai-docs-prompt.md
+          target-branch: main
+          allowed-output-paths: |
+            docs/adr/ADR-001-decisoes-arquiteturais.md
+            docs/runbooks/runbook.md
+            docs/ai-analysis.md
+            README.md
+            docs/swagger/swagger.yaml
         env:
           VERBOO_API_KEY: ${{ secrets.VERBOO_API_KEY }}
-          # PAT do repo (secret GH_TOKEN) tem permissão para criar PRs;
-          # cai para o GITHUB_TOKEN nativo se a secret não existir.
-          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          chmod +x scripts/ai-docs.sh
-          ./scripts/ai-docs.sh main
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
