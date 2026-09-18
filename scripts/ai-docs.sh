@@ -21,6 +21,7 @@ Inclua obrigatoriamente:
 2. docs/runbooks/runbook.md — Runbook operacional: como subir, comandos úteis, pontos de atenção, troubleshooting básico.
 3. docs/ai-analysis.md — Análise da IA sobre o repositório: stack, estrutura, riscos e sugestões de melhoria.
 4. README.md — o README existente, revisado e aprimorado pela IA (mantenha as informações corretas, corrija o que estiver desatualizado, melhore organização e clareza). Se não houver README no contexto, crie um.
+5. docs/swagger/swagger.yaml — a especificação OpenAPI atualizada: com base nos handlers/rotas encontrados no contexto, garanta que paths, schemas e descrições reflitam a API real. Mantenha o formato YAML do arquivo existente.
 Regras: seja técnico e conciso; baseie-se APENAS no contexto fornecido; não invente módulos ou endpoints que não aparecem no contexto.'
 
 echo "=== Branch alvo: $TARGET_BRANCH ==="
@@ -41,6 +42,10 @@ CONTEXT=$( {
   head -40 go.mod 2>/dev/null || true
   echo "=== docker-compose.yml ==="
   head -60 docker-compose.yml 2>/dev/null || true
+  echo "=== docs/swagger/swagger.yaml (especificação OpenAPI atual) ==="
+  head -300 docs/swagger/swagger.yaml 2>/dev/null || echo "(sem swagger)"
+  echo "=== Rotas registradas (busca em *.go) ==="
+  grep -rn -E '(GET|POST|PUT|DELETE|PATCH|Group|Handle)\(' --include='*.go' . | head -40 || true
   echo "=== Principais arquivos Go (imports e declarações) ==="
   for f in $(git ls-files '*.go' | head -15); do
     echo "--- $f ---"; head -30 "$f"
@@ -51,7 +56,7 @@ PAYLOAD=$(jq -n \
   --arg model "$MODEL" \
   --arg sys "$SYSTEM_PROMPT" \
   --arg ctx "$CONTEXT" \
-  '{model:$model, messages:[{role:"system",content:$sys},{role:"user",content:$ctx}], max_tokens:8000}')
+  '{model:$model, messages:[{role:"system",content:$sys},{role:"user",content:$ctx}], max_tokens:32000}')
 
 CONTENT=""
 for ATTEMPT in 1 2 3 4; do
@@ -60,18 +65,23 @@ for ATTEMPT in 1 2 3 4; do
     -H "Content-Type: application/json" \
     -d "$PAYLOAD")
   CONTENT=$(echo "$RESP" | jq -r '.choices[0].message.content // empty')
-  [ -n "$CONTENT" ] && break
-  echo "Tentativa $ATTEMPT falhou: $(echo "$RESP" | head -c 200). Aguardando $((ATTEMPT*30))s..." >&2
+  [ -z "$CONTENT" ] && { echo "Tentativa $ATTEMPT: sem conteúdo. Aguardando $((ATTEMPT*30))s..." >&2; sleep $((ATTEMPT*30)); continue; }
+  # Remove cercas de código caso o modelo insista em markdown
+  CONTENT=${CONTENT#\`\`\`json}
+  CONTENT=${CONTENT#\`\`\`}
+  CONTENT=${CONTENT%\`\`\`}
+  # Valida o JSON completo (detecta saída truncada por max_tokens)
+  if echo "$CONTENT" | jq -e '.files | type == "array"' > /dev/null 2>&1; then
+    break
+  fi
+  echo "Tentativa $ATTEMPT: JSON inválido/truncado. Aguardando $((ATTEMPT*30))s..." >&2
+  CONTENT=""
   sleep $((ATTEMPT*30))
 done
 if [ -z "$CONTENT" ]; then
-  echo "ERRO: IA não respondeu após 4 tentativas" >&2
+  echo "ERRO: IA não retornou JSON válido após 4 tentativas" >&2
   exit 1
 fi
-# Remove cercas de código caso o modelo insista em markdown
-CONTENT=${CONTENT#\`\`\`json}
-CONTENT=${CONTENT#\`\`\`}
-CONTENT=${CONTENT%\`\`\`}
 
 echo "$CONTENT" | jq -r '.files[] | @base64' | while read -r ENC; do
   FILE=$(echo "$ENC" | base64 -d)
