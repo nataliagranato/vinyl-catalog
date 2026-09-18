@@ -1,0 +1,33 @@
+name: Documentação com IA
+
+on:
+  workflow_dispatch:
+    inputs:
+      branches:
+        description: 'Branches a documentar (separadas por vírgula) ou "all"'
+        required: false
+        default: 'all'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ai-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gerar documentação e abrir PRs
+        env:
+          VERBOO_API_KEY: ${{ secrets.VERBOO_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/ai-docs.sh
+          BRANCHES="${{ inputs.branches }}"
+          if [ "$BRANCHES" = "all" ]; then
+            BRANCHES=$(gh api "repos/$GITHUB_REPOSITORY/branches" --paginate \
+              --jq '[.[].name | select(startswith("ai/docs-") | not)] | join(",")')
+          fi
+          echo "Branches: $BRANCHES"
+          ./scripts/ai-docs.sh "$BRANCHES"
