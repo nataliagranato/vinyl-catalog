@@ -55,15 +55,19 @@ for BR in $(echo "$BRANCHES" | tr ',' ' '); do
     --arg ctx "$CONTEXT" \
     '{model:$model, messages:[{role:"system",content:$sys},{role:"user",content:$ctx}], max_tokens:8000}')
 
-  RESP=$(curl -s --max-time 600 https://code.verboo.ai/router/v1/chat/completions \
-    -H "Authorization: Bearer $VERBOO_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "$PAYLOAD")
-
-  CONTENT=$(echo "$RESP" | jq -r '.choices[0].message.content // empty')
+  CONTENT=""
+  for ATTEMPT in 1 2 3; do
+    RESP=$(curl -s --max-time 600 https://code.verboo.ai/router/v1/chat/completions \
+      -H "Authorization: Bearer $VERBOO_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d "$PAYLOAD")
+    CONTENT=$(echo "$RESP" | jq -r '.choices[0].message.content // empty')
+    [ -n "$CONTENT" ] && break
+    echo "Tentativa $ATTEMPT falhou: $(echo "$RESP" | head -c 200). Aguardando 15s..." >&2
+    sleep 15
+  done
   if [ -z "$CONTENT" ]; then
-    echo "ERRO: resposta vazia da IA para $BR" >&2
-    echo "$RESP" | head -c 500 >&2
+    echo "ERRO: IA não respondeu após 3 tentativas para $BR" >&2
     continue
   fi
   # Remove cercas de código caso o modelo insista em markdown
